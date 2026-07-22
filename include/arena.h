@@ -25,7 +25,7 @@ static struct ArenaPage{
     byte* chunck;
 };
 
-typedef ArenaAllocation;
+typedef struct ArenaAllocation ArenaAllocation;
 static struct ArenaAllocation{
     unsigned current_page;
     size_t size;
