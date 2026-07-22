@@ -4,21 +4,21 @@
 #include <memory.h>
 #include <stdio.h>
 
-#define VEC_BASE_SIZE 16
+static const int VEC_BASE_SIZE = 16;
              
-
-typedef struct{
+typedef struct Vector Vector;
+struct Vector{
     size_t capacity;
     size_t size;
     size_t data_type_size;
     void* vector;
-}Vector;
+};
 
 Vector* vector_construct(size_t data_type_size);
 
 void vector_free(Vector* vector);
 
-Vector* vector_resize(Vector* vector, size_t new_capacity);
+static Vector* vector_resize(Vector* vector, size_t new_capacity);
 
 int vector_append(Vector** vector, void* data);
 
