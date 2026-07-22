@@ -31,7 +31,7 @@ HashMap* hashmap_construct(){
 
 void hashmap_destroy(HashMap* map){
     assert(map != NULL);
-    assert(map->buckets != NULL);
+   
     
     if (map->buckets == NULL){
         free(map);
@@ -62,7 +62,6 @@ void hashmap_destroy(HashMap* map){
 
 static HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
     assert(map != NULL);
-    assert(map->buckets != NULL);
     assert(new_capacity > 0);
     
     HashMap* new_map = malloc(sizeof(HashMap));
@@ -88,7 +87,6 @@ static HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
 void hashmap_add(HashMap** map, const void* key, const void* data, const size_t key_size, const size_t data_size){
     assert(map != NULL);
     assert(*map != NULL);
-    assert((*map)->buckets != NULL); 
     assert(key != NULL);
     assert(data != NULL);
     assert(key_size > 0);
@@ -150,8 +148,7 @@ void hashmap_add(HashMap** map, const void* key, const void* data, const size_t 
 
 void hashmap_remove(HashMap** map, const void* key, const size_t key_size){
     assert(map != NULL);
-    assert(*map != NULL):
-    assert((*map)->buckets != NULL);   
+    assert(*map != NULL);
     assert(key != NULL);
     assert(key_size > 0);
     
@@ -209,7 +206,6 @@ void hashmap_remove(HashMap** map, const void* key, const size_t key_size){
 
 void* hashmap_get(const HashMap* map, const void* key, const size_t key_size){
     assert(map != NULL);
-    assert(map->buckets != NULL);
     assert(key != NULL);
     assert(key_size > 0);
     
@@ -235,7 +231,6 @@ void* hashmap_get(const HashMap* map, const void* key, const size_t key_size){
 
 int hashmap_contains(const HashMap* map, const void* key, const size_t key_size){
     assert(map != NULL);
-    assert(map->buckets != NULL);
     assert(key != NULL);
     assert(key_size > 0);
 
