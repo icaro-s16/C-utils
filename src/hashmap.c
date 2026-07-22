@@ -1,7 +1,8 @@
 #include "../headers/hashmap.h"
 
 static uint32_t fnv1_32_hash(const void* data, const size_t data_size){
-    if (data == NULL || data_size == 0) return -1;
+    assert(data != NULL);
+    assert(data_size > 0);
 
     uint32_t hash = FNV_OFFSET_BASIS_32;
 
@@ -14,7 +15,7 @@ static uint32_t fnv1_32_hash(const void* data, const size_t data_size){
 }
 
 
-static size_t hash_function(const uint32_t hash_code, const size_t hash_map_size){
+static inline size_t hash_function(const uint32_t hash_code, const size_t hash_map_size){
     double base_mul = ((1.0 + sqrt(5.0))/2.0) - 1.0;
     return (floor(hash_map_size * fmod((hash_code * base_mul), 1.0))); 
 }
@@ -29,7 +30,9 @@ HashMap* hashmap_construct(){
 }
 
 void hashmap_destroy(HashMap* map){
-    if (map == NULL) return;
+    assert(map != NULL);
+    assert(map->buckets != NULL);
+    
     if (map->buckets == NULL){
         free(map);
         return;
@@ -58,8 +61,10 @@ void hashmap_destroy(HashMap* map){
 }
 
 static HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
-    if (map == NULL || new_capacity == 0 || new_capacity < map->size ) return map;
-
+    assert(map != NULL);
+    assert(map->buckets != NULL);
+    assert(new_capacity > 0);
+    
     HashMap* new_map = malloc(sizeof(HashMap));
     new_map->capacity = new_capacity;
     new_map->size = 0;
@@ -80,8 +85,14 @@ static HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
     return new_map;
 }
 
-int hashmap_add(HashMap** map, const void* key, const void* data, const size_t key_size, const size_t data_size){
-    if (map == NULL || key == NULL || key_size == 0 || data == NULL || data_size == 0) return -1;
+void hashmap_add(HashMap** map, const void* key, const void* data, const size_t key_size, const size_t data_size){
+    assert(map != NULL);
+    assert(*map != NULL);
+    assert((*map)->buckets != NULL); 
+    assert(key != NULL);
+    assert(data != NULL);
+    assert(key_size > 0);
+    assert(data_size > 0);
     
     uint32_t hash_code = fnv1_32_hash(key, key_size);
 
@@ -101,7 +112,7 @@ int hashmap_add(HashMap** map, const void* key, const void* data, const size_t k
         memcpy((*map)->buckets[bucket].key, key, key_size);
         (*map)->buckets[bucket].key_size = key_size;
         (*map)->buckets[bucket].next = NULL;
-        return 0;
+        return;
     }
 
     Pair* slow_pointer = NULL;
@@ -118,7 +129,7 @@ int hashmap_add(HashMap** map, const void* key, const void* data, const size_t k
             fast_pointer->data = malloc(data_size);
             fast_pointer->data_size = data_size;
             memcpy(fast_pointer->data, data, data_size);
-            return 0;
+            return;
         }
 
         slow_pointer = fast_pointer;
@@ -135,12 +146,14 @@ int hashmap_add(HashMap** map, const void* key, const void* data, const size_t k
     slow_pointer->next->key_size = key_size;
     slow_pointer->next->next = NULL;
 
-    return 0;
 }
 
-int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
-    if (map == NULL || (*map) == NULL || key == NULL) return -1;
-    if ((*map)->buckets == NULL | (*map)->size == 0) return -1;
+void hashmap_remove(HashMap** map, const void* key, const size_t key_size){
+    assert(map != NULL);
+    assert(*map != NULL):
+    assert((*map)->buckets != NULL);   
+    assert(key != NULL);
+    assert(key_size > 0);
     
     uint32_t hash_code = fnv1_32_hash(key, key_size);
     size_t bucket = hash_function(hash_code, (*map)->capacity);
@@ -161,7 +174,7 @@ int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
         fast_pointer = fast_pointer->next;
     }
 
-    if (fast_pointer == NULL) return -1;
+    if fast_pointer == NULL) return;
 
     (*map)->size -= 1;
     if (slow_pointer == NULL){
@@ -182,7 +195,7 @@ int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
         }
         if ((double)(*map)->size / (double)(*map)->capacity <= 0.25 && (*map)->capacity > BASE_BUCKETS_SIZE)
             *map = hashmap_rehash(*map, (*map)->capacity / 2);
-        return 0;
+        return;
     }
 
     slow_pointer->next = fast_pointer->next;
@@ -191,10 +204,15 @@ int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
     free(fast_pointer);
     if ((double)(*map)->size / (double)(*map)->capacity <= 0.25 && (*map)->capacity > BASE_BUCKETS_SIZE)
         *map = hashmap_rehash(*map, (*map)->capacity / 2);
-    return 0;
+    return;
 }
 
 void* hashmap_get(const HashMap* map, const void* key, const size_t key_size){
+    assert(map != NULL);
+    assert(map->buckets != NULL);
+    assert(key != NULL);
+    assert(key_size > 0);
+    
     uint32_t hash_code = fnv1_32_hash(key, key_size);
     size_t bucket = hash_function(hash_code, map->capacity);
 
@@ -216,7 +234,10 @@ void* hashmap_get(const HashMap* map, const void* key, const size_t key_size){
 }
 
 int hashmap_contains(const HashMap* map, const void* key, const size_t key_size){
-    if (map == NULL && map->buckets == NULL) return 0;
+    assert(map != NULL);
+    assert(map->buckets != NULL);
+    assert(key != NULL);
+    assert(key_size > 0);
 
     uint32_t hash_code = fnv1_32_hash(key, key_size);
     size_t bucket = hash_function(hash_code, map->capacity);
