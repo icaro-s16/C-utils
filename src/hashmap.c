@@ -1,6 +1,6 @@
 #include "../headers/hashmap.h"
 
-uint32_t fnv1_32_hash(const void* data, const size_t data_size){
+static uint32_t fnv1_32_hash(const void* data, const size_t data_size){
     if (data == NULL || data_size == 0) return -1;
 
     uint32_t hash = FNV_OFFSET_BASIS_32;
@@ -14,7 +14,7 @@ uint32_t fnv1_32_hash(const void* data, const size_t data_size){
 }
 
 
-size_t hash_function(const uint32_t hash_code, const size_t hash_map_size){
+static size_t hash_function(const uint32_t hash_code, const size_t hash_map_size){
     double base_mul = ((1.0 + sqrt(5.0))/2.0) - 1.0;
     return (floor(hash_map_size * fmod((hash_code * base_mul), 1.0))); 
 }
@@ -57,7 +57,7 @@ void hashmap_destroy(HashMap* map){
 
 }
 
-HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
+static HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
     if (map == NULL || new_capacity == 0 || new_capacity < map->size ) return map;
 
     HashMap* new_map = malloc(sizeof(HashMap));
@@ -71,7 +71,7 @@ HashMap* hashmap_rehash(HashMap* map, const size_t new_capacity){
         Pair* actual_pair = &map->buckets[offset];
         while (actual_pair != NULL){
             hashmap_add(&new_map, actual_pair->key, actual_pair->data, actual_pair->key_size, actual_pair->data_size);
-            actual_pair = (Pair*)actual_pair->next;
+            actual_pair = actual_pair->next;
         }
 
     }
@@ -122,18 +122,18 @@ int hashmap_add(HashMap** map, const void* key, const void* data, const size_t k
         }
 
         slow_pointer = fast_pointer;
-        fast_pointer = (Pair*)fast_pointer->next;
+        fast_pointer = fast_pointer->next;
     }
 
     (*map)->size += 1;
     slow_pointer->next = malloc(sizeof(Pair));
-    ((Pair*)slow_pointer->next)->data = malloc(data_size);
-    memcpy(((Pair*)slow_pointer->next)->data, data, data_size);
-    ((Pair*)slow_pointer->next)->data_size = data_size;
-    ((Pair*)slow_pointer->next)->key = malloc(key_size);
-    memcpy(((Pair*)slow_pointer->next)->key, key, key_size);
-    ((Pair*)slow_pointer->next)->key_size = key_size;
-    ((Pair*)slow_pointer->next)->next = NULL;
+    slow_pointer->next->data = malloc(data_size);
+    memcpy(slow_pointer->next->data, data, data_size);
+    slow_pointer->next->data_size = data_size;
+    slow_pointer->next->key = malloc(key_size);
+    memcpy(slow_pointer->next->key, key, key_size);
+    slow_pointer->next->key_size = key_size;
+    slow_pointer->next->next = NULL;
 
     return 0;
 }
@@ -158,7 +158,7 @@ int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
             break;
         }
         slow_pointer = fast_pointer;
-        fast_pointer = (Pair*)fast_pointer->next;
+        fast_pointer = fast_pointer->next;
     }
 
     if (fast_pointer == NULL) return -1;
@@ -172,7 +172,7 @@ int hashmap_remove(HashMap** map, const void* key, const size_t key_size){
         fast_pointer->data_size = 0;
         fast_pointer->key_size = 0;
         if (fast_pointer->next != NULL){
-            Pair* next = ((Pair*)fast_pointer->next);
+            Pair* next = fast_pointer->next;
             fast_pointer->data = next->data;
             fast_pointer->key = next->key;
             fast_pointer->data_size = next->data_size;
@@ -209,7 +209,7 @@ void* hashmap_get(const HashMap* map, const void* key, const size_t key_size){
         ){
             return move_pointer->data;
         }
-        move_pointer = (Pair*)move_pointer->next;
+        move_pointer = move_pointer->next;
     }
 
     return NULL;
@@ -232,7 +232,7 @@ int hashmap_contains(const HashMap* map, const void* key, const size_t key_size)
             memcmp(actual_pair->key, key, key_size) == 0
         ) return 1;
 
-        actual_pair = (Pair*)actual_pair->next;
+        actual_pair = actual_pair->next;
     }
 
     return 0;
