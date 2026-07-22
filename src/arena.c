@@ -12,9 +12,9 @@ Arena* arena_construct(size_t page_size, unsigned flags){
     arena->tail = arena->head;
     arena->head->next = NULL;
     arena->head->prev = NULL;
-    (arena->head->data) = malloc(sizeof(ArenaPage));
-    ((ArenaPage*) arena->head->data)->chunck = calloc(sizeof(byte), arena->page_size);
-    ((ArenaPage*) arena->head->data)->offset = 0;
+    arena->head->data = malloc(sizeof(ArenaPage));
+    arena->head->data->chunck = calloc(sizeof(byte), arena->page_size);
+    arena->head->data->offset = 0;
     return arena;
 }
 
@@ -25,7 +25,7 @@ void arena_destroy(Arena* arena){
     while (arena->head != NULL){
         struct Node* current_node = arena->head;
         arena->head = arena->head->next;
-        free(((ArenaPage*)current_node->data)->chunck);
+        free(current_node->data->chunck);
         free(current_node->data);
         free(current_node);
     }
@@ -46,8 +46,8 @@ static void arena_push_page(Arena** arena){
         (*arena)->head->next = NULL;
         (*arena)->head->prev = NULL;
         (*arena)->head->data = malloc(sizeof(ArenaPage));
-        ((ArenaPage*) (*arena)->head->data)->chunck = calloc(sizeof(byte), (*arena)->page_size);
-        ((ArenaPage*) (*arena)->head->data)->offset = 0;
+        ((*arena)->head->data)->chunck = calloc(sizeof(byte), (*arena)->page_size);
+        ((*arena)->head->data)->offset = 0;
         return;
     }
 
@@ -56,8 +56,8 @@ static void arena_push_page(Arena** arena){
     (*arena)->tail = (*arena)->tail->next;
     (*arena)->tail->next = NULL;
     (*arena)->tail->data = malloc(sizeof(ArenaPage));
-    ((ArenaPage*) (*arena)->tail->data)->chunck = calloc(sizeof(byte), (*arena)->page_size);
-    ((ArenaPage*) (*arena)->tail->data)->offset = 0;
+    ((*arena)->tail->data)->chunck = calloc(sizeof(byte), (*arena)->page_size);
+    ((*arena)->tail->data)->offset = 0;
 }
 
 void* arena_malloc(Arena* arena, size_t data_size){
@@ -67,7 +67,7 @@ void* arena_malloc(Arena* arena, size_t data_size){
     Node* current_node = arena->head;
     unsigned n_actual_page = 0;
 
-    while (current_node != NULL && ((ArenaPage*)current_node->data)->offset + data_size > arena->page_size){
+    while (current_node != NULL && current_node->data->offset + data_size > arena->page_size){
         current_node = current_node->next;
         n_actual_page += 1;
     }
@@ -77,10 +77,8 @@ void* arena_malloc(Arena* arena, size_t data_size){
         current_node = arena->tail;
     }
 
-    byte *alloc_space = (((ArenaPage*)current_node->data)->chunck + ((ArenaPage*)current_node->data)->offset);
-    
-    ((ArenaPage*)current_node->data)->offset += data_size;
-
+    byte *alloc_space = (current_node->data->chunck + current_node->data->offset);
+    current_node->data->offset += data_size;
     ArenaAllocation allocation_info = {
         n_actual_page,
         data_size,
@@ -100,10 +98,7 @@ void* arena_realloc(Arena* arena, void* address, size_t new_size){
     ArenaAllocation* allocation_info = NULL;
 
     for (int i = 0; i < arena->allocations->size; i ++){
-        if ((allocation_info = vector_get(arena->allocations, i)) == NULL) {
-            fprintf(stderr, "\033[31mFatal Error: The index is out of range for the vector\033[0m\n");
-            abort();
-        }
+        assert((allocation_info = vector_get(arena->allocations, i)) != NULL)); 
 
         if (allocation_info->address == address)
             break;
@@ -120,17 +115,17 @@ void* arena_realloc(Arena* arena, void* address, size_t new_size){
         current_node = current_node->next;
 
     if (
-        allocation_info->address + allocation_info->size  ==  ((ArenaPage*)current_node->data)->chunck + ((ArenaPage*)current_node->data)->offset
+        allocation_info->address + allocation_info->size  == current_node->data->chunck + current_node->data->offset
     ){
-        ((ArenaPage*)current_node->data)->offset -= allocation_info->size;
-        ((ArenaPage*)current_node->data)->offset += new_size;
+        current_node->data->offset -= allocation_info->size;
+        current_node->data->offset += new_size;
         return address;
     }
 
     current_node = arena->head;
     unsigned n_actual_page = 0;
 
-    while (current_node != NULL && ((ArenaPage*)current_node->data)->offset + new_size > arena->page_size){
+    while (current_node != NULL && current_node->data->offset + new_size > arena->page_size){
         current_node = current_node->next;
         n_actual_page += 1;
     }
@@ -140,9 +135,9 @@ void* arena_realloc(Arena* arena, void* address, size_t new_size){
         current_node = arena->tail;
     }
 
-    allocation_info->address = (void*)(((ArenaPage*)current_node->data)->chunck + ((ArenaPage*)current_node->data)->offset);
+    allocation_info->address = (void*)(current_node->data->chunck + current_node->data->offset);
     
-    ((ArenaPage*)current_node->data)->offset += new_size;
+    current_node->data->offset += new_size;
     
     memcpy(
         allocation_info->address,
@@ -160,7 +155,7 @@ static void arena_free_pages(Arena* arena){
     assert(arena != NULL);
     Node* current_node = arena->head;
     while (current_node != NULL){
-        ((ArenaPage*)current_node->data)->offset = 0;
+        current_node->data->offset = 0;
         current_node = current_node->next;
     }
 }
