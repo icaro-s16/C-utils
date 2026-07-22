@@ -6,7 +6,8 @@
 #include "vector.h"
 
 enum{
-    SINGLE_PAGE = 0b0001
+    SINGLE_PAGE = 0b0001,
+    SHARED = 0b0010
 };
 
 typedef unsigned char byte;
