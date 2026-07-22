@@ -13,7 +13,7 @@ static enum{
 };
 
 typedef struct Pair Pair;
-struct Pair{
+static struct Pair{
     size_t key_size;
     size_t data_size;
     Pair* next;
